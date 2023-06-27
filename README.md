@@ -15,7 +15,7 @@ here is the full constructor that has been added :
 ```csharp
  public Lua(long memoryLimit , long instructionLimit, bool openLibs = true)
         {
-            var memSize = Marshal.AllocHGlobal(4);
+            var memSize = Marshal.AllocHGlobal(8);
             unsafe
             {
                 *(long*) memSize = memoryLimit;

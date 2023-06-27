@@ -345,7 +345,7 @@ namespace NLua
         /// <param name="openLibs">open the default libs or not</param>
         public Lua(long memoryLimit , long instructionLimit, bool openLibs = true)
         {
-            var memSize = Marshal.AllocHGlobal(4);
+            var memSize = Marshal.AllocHGlobal(8);
             unsafe
             {
                 *(long*) memSize = memoryLimit;
