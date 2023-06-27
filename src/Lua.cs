@@ -223,19 +223,19 @@ namespace NLua
                 return ptr;
 
 
-            var inUse = (long*) ud;
+            var available = (long*) ud;
             var newSize = (uint) nsize;
             var originalSize = (uint) osize;
 
             if (ptr == IntPtr.Zero)
             {
-                if (*inUse - (int) newSize < 0)
+                if (*available - (int) newSize < 0)
                 {
                     return IntPtr.Zero;
                 }
 
                 var intPtr = Marshal.AllocHGlobal((int) newSize);
-                *inUse -= (int) newSize;
+                *available -= (int) newSize;
                 return intPtr;
             }
 
@@ -244,11 +244,11 @@ namespace NLua
             {
                 Marshal.FreeHGlobal(ptr);
 
-                *inUse += (int) originalSize;
+                *available += (int) originalSize;
                 return IntPtr.Zero;
             }
 
-            if (*inUse - ((int) nsize - (int) osize) < 0)
+            if (*available - ((int) nsize - (int) osize) < 0)
             {
                 return IntPtr.Zero;
             }
@@ -257,7 +257,7 @@ namespace NLua
 
             if (ptr != IntPtr.Zero)
             {
-                *inUse -= ((int) nsize - (int) osize);
+                *available -= ((int) nsize - (int) osize);
             }
 
             return ptr;
