@@ -37,4 +37,55 @@ here is the full constructor that has been added :
         }
 ```
 
+and this is the allocator :
+
+```csharp
+   private static unsafe IntPtr Allocator(IntPtr ud, IntPtr ptr, UIntPtr osize, UIntPtr nsize)
+        {
+            if (osize == nsize)
+                return ptr;
+
+
+            var inUse = (long*) ud;
+            var newSize = (uint) nsize;
+            var originalSize = (uint) osize;
+
+            if (ptr == IntPtr.Zero)
+            {
+                if (*inUse - (int) newSize < 0)
+                {
+                    return IntPtr.Zero;
+                }
+
+                var intPtr = Marshal.AllocHGlobal((int) newSize);
+                *inUse -= (int) newSize;
+                return intPtr;
+            }
+
+
+            if (nsize == UIntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(ptr);
+
+                *inUse += (int) originalSize;
+                return IntPtr.Zero;
+            }
+
+            if (*inUse - ((int) nsize - (int) osize) < 0)
+            {
+                return IntPtr.Zero;
+            }
+
+            ptr = Marshal.ReAllocHGlobal(ptr, (IntPtr) newSize);
+
+            if (ptr != IntPtr.Zero)
+            {
+                *inUse -= ((int) nsize - (int) osize);
+            }
+
+            return ptr;
+        }
+```
+
+
 I am also planning to make any of instruction and memory limit optional.
