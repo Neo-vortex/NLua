@@ -22,6 +22,10 @@ namespace NLua
 {
     public class Lua : IDisposable
     {
+
+        private long _currentInstructionCount = 0;
+        
+        
         #region lua debug functions
         /// <summary>
         /// Event that is raised when an exception occures during a hook call.
@@ -102,7 +106,7 @@ namespace NLua
 
  //       -- Preload the mscorlib assembly
  //       luanet.load_assembly('mscorlib')";
-
+ 
  private const string ClrPackage = @"if not luanet then require'luanet'end;local a,b=luanet.import_type,luanet.load_assembly;local c={__index=function(d,e)local f=rawget(d,e)if f==nil then f=a(d.packageName.."".""..e)if f==nil then f=a(e)end;d[e]=f end;return f end}function luanet.namespace(g)if type(g)=='table'then local h={}for i=1,#g do h[i]=luanet.namespace(g[i])end;return unpack(h)end;local j={packageName=g}setmetatable(j,c)return j end;local k,l;local function m()l={}k={__index=function(n,e)for i,d in ipairs(l)do local f=d[e]if f then _G[e]=f;return f end end end}setmetatable(_G,k)end;function CLRPackage(o,p)p=p or o;local q=pcall(b,o)return luanet.namespace(p)end;function import(o,p)if not k then m()end;if not p then local i=o:find('%.dll$')if i then p=o:sub(1,i-1)else p=o end end;local j=CLRPackage(o,p)table.insert(l,j)return j end;function luanet.make_array(r,s)local t=r[#s]for i,u in ipairs(s)do t:SetValue(u,i-1)end;return t end;function luanet.each(v)local w=v:GetEnumerator()return function()if w:MoveNext()then return w.Current end end end";
 //@"---
 //--- This lua module provides auto importing of .net classes into a named package.
@@ -212,6 +216,55 @@ namespace NLua
 //   end
 //end
 //";
+
+        private static unsafe IntPtr Allocator(IntPtr ud, IntPtr ptr, UIntPtr osize, UIntPtr nsize)
+        {
+            if (osize == nsize)
+                return ptr;
+
+
+            var inUse = (long*) ud;
+            var newSize = (uint) nsize;
+            var originalSize = (uint) osize;
+
+            if (ptr == IntPtr.Zero)
+            {
+                if (*inUse - (int) newSize < 0)
+                {
+                    return IntPtr.Zero;
+                }
+
+                var intPtr = Marshal.AllocHGlobal((int) newSize);
+                *inUse -= (int) newSize;
+                return intPtr;
+            }
+
+
+            if (nsize == UIntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(ptr);
+
+                *inUse += (int) originalSize;
+                return IntPtr.Zero;
+            }
+
+            if (*inUse - ((int) nsize - (int) osize) < 0)
+            {
+                return IntPtr.Zero;
+            }
+
+            ptr = Marshal.ReAllocHGlobal(ptr, (IntPtr) newSize);
+
+            if (ptr != IntPtr.Zero)
+            {
+                *inUse -= ((int) nsize - (int) osize);
+            }
+
+            return ptr;
+        }
+
+
+
         public bool UseTraceback { get; set; } = false;
 
         /// <summary>
@@ -284,12 +337,33 @@ namespace NLua
             _luaState.AtPanic(PanicCallback);
         }
 
-        public Lua(bool openLibs = true)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="memoryLimit">limit lua execution memory in byte</param>
+        /// <param name="instructionLimit">limit lua execution instruction count</param>
+        /// <param name="openLibs">open the default libs or not</param>
+        public Lua(long memoryLimit , long instructionLimit, bool openLibs = true)
         {
-            _luaState = new LuaState(openLibs);
+            var memSize = Marshal.AllocHGlobal(4);
+            unsafe
+            {
+                *(long*) memSize = memoryLimit;
+            }
+            _luaState = new LuaState(Allocator, memSize);
+            if (openLibs)  _luaState.OpenLibs();
             Init();
             // We need to keep this in a managed reference so the delegate doesn't get garbage collected
             _luaState.AtPanic(PanicCallback);
+            this.SetDebugHook(LuaHookMask.Count,1);
+            this.DebugHook += (sender, args) =>
+            {
+                _currentInstructionCount++;
+                if (_currentInstructionCount > instructionLimit)
+                {
+                    this._luaState.Error($"Instruction limit reached :{_currentInstructionCount}");
+                }
+            };
         }
 
         /*

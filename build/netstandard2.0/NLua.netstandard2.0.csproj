@@ -5,6 +5,7 @@
     <RootNamespace>NLua</RootNamespace>
     <AssemblyName>NLua</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
