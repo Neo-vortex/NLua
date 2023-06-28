@@ -23,8 +23,8 @@ namespace NLua
     public class Lua : IDisposable
     {
 
-        public long CurrentInstructionCount = 0;
-        
+        public long CurrentInstructionCount = -1;
+        public long CurrentAvailableMemory = -1;
         
         #region lua debug functions
         /// <summary>
@@ -217,7 +217,7 @@ namespace NLua
 //end
 //";
 
-        private static unsafe IntPtr Allocator(IntPtr ud, IntPtr ptr, UIntPtr osize, UIntPtr nsize)
+        private  unsafe IntPtr Allocator(IntPtr ud, IntPtr ptr, UIntPtr osize, UIntPtr nsize)
         {
             if (osize == nsize)
                 return ptr;
@@ -236,6 +236,7 @@ namespace NLua
 
                 var intPtr = Marshal.AllocHGlobal((int) newSize);
                 *available -= (int) newSize;
+                CurrentAvailableMemory = *available;
                 return intPtr;
             }
 
@@ -245,6 +246,7 @@ namespace NLua
                 Marshal.FreeHGlobal(ptr);
 
                 *available += (int) originalSize;
+                CurrentAvailableMemory = *available;
                 return IntPtr.Zero;
             }
 
@@ -258,6 +260,7 @@ namespace NLua
             if (ptr != IntPtr.Zero)
             {
                 *available -= ((int) nsize - (int) osize);
+                CurrentAvailableMemory = *available;
             }
 
             return ptr;
