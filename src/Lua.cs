@@ -231,7 +231,7 @@ namespace NLua
             {
                 if (*available - (int) newSize < 0)
                 {
-                    throw new OutOfMemoryException("Lua script exceeded the memory limit ");
+                    throw new LuaScriptOutOfMemoryException();
                 }
 
                 var intPtr = Marshal.AllocHGlobal((int) newSize);
@@ -250,7 +250,7 @@ namespace NLua
 
             if (*available - ((int) nsize - (int) osize) < 0)
             {
-                throw new OutOfMemoryException("Lua script exceeded the memory limit ");
+                throw new LuaScriptOutOfMemoryException();
             }
 
             ptr = Marshal.ReAllocHGlobal(ptr, (IntPtr) newSize);
