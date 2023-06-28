@@ -23,7 +23,7 @@ namespace NLua
     public class Lua : IDisposable
     {
 
-        private long _currentInstructionCount = 0;
+        public long CurrentInstructionCount = 0;
         
         
         #region lua debug functions
@@ -231,7 +231,7 @@ namespace NLua
             {
                 if (*available - (int) newSize < 0)
                 {
-                    return IntPtr.Zero;
+                    throw new OutOfMemoryException("Lua script exceeded the memory limit ");
                 }
 
                 var intPtr = Marshal.AllocHGlobal((int) newSize);
@@ -250,7 +250,7 @@ namespace NLua
 
             if (*available - ((int) nsize - (int) osize) < 0)
             {
-                return IntPtr.Zero;
+                throw new OutOfMemoryException("Lua script exceeded the memory limit ");
             }
 
             ptr = Marshal.ReAllocHGlobal(ptr, (IntPtr) newSize);
@@ -358,10 +358,10 @@ namespace NLua
             this.SetDebugHook(LuaHookMask.Count,1);
             this.DebugHook += (sender, args) =>
             {
-                _currentInstructionCount++;
-                if (_currentInstructionCount > instructionLimit)
+                CurrentInstructionCount++;
+                if (CurrentInstructionCount > instructionLimit)
                 {
-                    this._luaState.Error($"Instruction limit reached :{_currentInstructionCount}");
+                    this._luaState.Error($"Instruction limit reached :{CurrentInstructionCount}");
                 }
             };
         }
