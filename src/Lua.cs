@@ -331,10 +331,19 @@ namespace NLua
             }
         }
 
-        public Lua(LuaAlloc alloc, IntPtr ptr , bool openLibs = true)
+        public Lua(bool openLibs = true , long sandboxFuse = 6469693230)
+        {
+            _luaState = new LuaState();
+            if (openLibs)  _luaState.OpenLibs(sandboxFuse);
+            Init();
+            // We need to keep this in a managed reference so the delegate doesn't get garbage collected
+            _luaState.AtPanic(PanicCallback);
+        }
+        
+        public Lua(LuaAlloc alloc, IntPtr ptr , bool openLibs = true, long sandboxFuse = 6469693230)
         {
             _luaState = new LuaState(alloc, ptr);
-            if (openLibs)  _luaState.OpenLibs();
+            if (openLibs)  _luaState.OpenLibs(sandboxFuse);
             Init();
             // We need to keep this in a managed reference so the delegate doesn't get garbage collected
             _luaState.AtPanic(PanicCallback);
@@ -346,7 +355,7 @@ namespace NLua
         /// <param name="memoryLimit">limit lua execution memory in byte</param>
         /// <param name="instructionLimit">limit lua execution instruction count</param>
         /// <param name="openLibs">open the default libs or not</param>
-        public Lua(long memoryLimit , long instructionLimit, bool openLibs = true)
+        public Lua(long memoryLimit , long instructionLimit, bool openLibs = true , long sandboxFuse = 6469693230)
         {
             var memSize = Marshal.AllocHGlobal(8);
             unsafe
@@ -354,7 +363,7 @@ namespace NLua
                 *(long*) memSize = memoryLimit;
             }
             _luaState = new LuaState(Allocator, memSize);
-            if (openLibs)  _luaState.OpenLibs();
+            if (openLibs)  _luaState.OpenLibs(sandboxFuse);
             Init();
             // We need to keep this in a managed reference so the delegate doesn't get garbage collected
             _luaState.AtPanic(PanicCallback);
