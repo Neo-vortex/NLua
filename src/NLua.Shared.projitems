@@ -44,7 +44,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Method\RegisterEventHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ObjectTranslator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ObjectTranslatorPool.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Properties\AssemblyInfo.cs" />
+    <Folder Include="$(MSBuildThisFileDirectory)Properties\" />
     <Compile Include="$(MSBuildThisFileDirectory)ProxyType.cs" />
   </ItemGroup>
 </Project>
