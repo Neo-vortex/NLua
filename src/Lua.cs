@@ -374,6 +374,7 @@ namespace NLua
                 if (CurrentInstructionCount > instructionLimit)
                 {
                     this._luaState.Error($"Instruction limit reached :{CurrentInstructionCount}");
+                    throw new LuaScriptOutOfCPU();
                 }
             };
         }
