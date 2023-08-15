@@ -82,6 +82,7 @@ and this is the allocator :
             {
                 *inUse -= ((int) nsize - (int) osize);
             }
+}
 ```
 For `KeraLua` backend use this one : https://github.com/Neo-vortex/KeraLua
             return ptr;
